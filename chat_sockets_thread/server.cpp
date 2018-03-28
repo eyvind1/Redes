@@ -9,20 +9,27 @@
 #include <iostream>
 #include <thread>
 
+#include "protocol.h"
+
 using namespace std;
 
 
 void read_from_client(int &SocketFD, bool &finished){
     finished = false;
-    char buffer[256];
-    bzero(buffer,255);
-    int n = read(SocketFD,buffer,256);
+    char *message_buffer;
+    char buffer[4];
+    bzero(buffer,4);
+    int n = read(SocketFD,buffer,4);
     do{
         if (n>0){
-            cout << "Message Received:  " << buffer << endl;
+            int size_message = atoi(buffer);
+            message_buffer = new char[size_message];
+            n = read(SocketFD, message_buffer, size_message);
+            cout << "Size Message: " << size_message << endl;
+            cout << "Message Received:  " << message_buffer << endl;
         }
-        bzero(buffer,256);
-        n = read(SocketFD,buffer,256);
+        bzero(buffer,4);
+        n = read(SocketFD,buffer,4);
     }while(true);
 }
 
@@ -68,11 +75,13 @@ int main()
         }
         bool finished = false;
         std::thread(read_from_client, std::ref(ConnectFD), std::ref(finished)).detach();
-        n = write(ConnectFD,"Bienvenido",256);
+        input = "Bienvenido";
+        string to_send = encode_message(input);
+        n = write(ConnectFD,to_send.c_str(),strlen(to_send.c_str()));
         while(true){
-            cout << "que hay" << endl;
-            cin >> input;
-            n = write(ConnectFD,input.c_str(),strlen(input.c_str()));
+            std::getline(std::cin, input);
+            to_send = encode_message(input);
+            n = write(ConnectFD,to_send.c_str(),strlen(to_send.c_str()));
         }
 
         shutdown(ConnectFD, SHUT_RDWR);

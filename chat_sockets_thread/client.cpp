@@ -9,20 +9,27 @@
 #include <iostream>
 #include <thread>
 
+#include "protocol.h"
+
 using namespace std;
 
 
 void read_from_client(int &SocketFD, bool &finished){
     finished = false;
-    char buffer[256];
-    bzero(buffer,255);
-    int n = read(SocketFD,buffer,256);
+    char *message_buffer;
+    char buffer[4];
+    bzero(buffer,4);
+    int n = read(SocketFD,buffer,4);
     do{
         if (n>0){
-            cout << "Server Message Received:  " << buffer << endl;
+            int size_message = atoi(buffer);
+            message_buffer = new char[size_message];
+            n = read(SocketFD, message_buffer, size_message);
+            cout << "Size Message: " << size_message << endl;
+            cout << "Server Message Received:  " << message_buffer << endl;
         }
-        bzero(buffer,256);
-        n = read(SocketFD,buffer,256);
+        bzero(buffer,4);
+        n = read(SocketFD,buffer,4);
     }while(true);
 }
 
@@ -32,7 +39,6 @@ int main(int argc, char *argv[])
     int Res;
     int SocketFD = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP );
     int n;
-    char buffer[256];
 
     if (-1 == SocketFD)
     {
@@ -68,12 +74,16 @@ int main(int argc, char *argv[])
     bool finished;
     std::thread(read_from_client, std::ref(SocketFD), std::ref(finished)).detach();
     cout << "Connecting..." << endl;
-    string input_message;
-    n = write(SocketFD,input_message.c_str(),strlen(input_message.c_str()));
+    string input_message = "Hi, I'm a Client";
+
+    string to_send = encode_message(input_message);
+
+    n = write(SocketFD,to_send.c_str(),strlen(to_send.c_str()));
     while (true) {
-        cin >> input_message;
-        n = write(SocketFD,input_message.c_str(),strlen(input_message.c_str()));
-        printf("Sending:<%s>\n",input_message.c_str());
+        std::getline(std::cin, input_message);
+        to_send = encode_message(input_message);
+        n = write(SocketFD,to_send.c_str(),strlen(to_send.c_str()));
+        //printf("Sending:<%s>\n",input_message.c_str());
     }
 
 

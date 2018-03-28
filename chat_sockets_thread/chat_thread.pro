@@ -6,3 +6,6 @@ CONFIG -= qt
 SOURCES += \
     client.cpp \
     server.cpp
+
+HEADERS += \
+    protocol.h

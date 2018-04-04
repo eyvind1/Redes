@@ -8,4 +8,5 @@ SOURCES += \
     server.cpp
 
 HEADERS += \
-    protocol.h
+    protocol.h \
+    protocol_server.h

@@ -8,14 +8,18 @@
 #include <unistd.h>
 #include <iostream>
 #include <thread>
-
-#include "protocol.h"
+#include <queue>
+#include <mutex>
+#include "protocol_server.h"
 
 using namespace std;
 
+std::mutex mutx;
+queue<Messsage> queue_messages;
+Protocol protocol_chat;
 
-void read_from_client(int &SocketFD, bool &finished){
-    finished = false;
+
+void read_from_client(int SocketFD){
     char *message_buffer;
     char buffer[4];
     bzero(buffer,4);
@@ -23,14 +27,30 @@ void read_from_client(int &SocketFD, bool &finished){
     do{
         if (n>0){
             int size_message = atoi(buffer);
-            message_buffer = new char[size_message];
-            n = read(SocketFD, message_buffer, size_message);
-            cout << "Size Message: " << size_message << endl;
-            cout << "Message Received:  " << message_buffer << endl;
+            char buffer_op[1];
+            //now read operation
+            n = read(SocketFD, buffer_op, 1);
+            Messsage msg = protocol_chat.read_s(buffer_op[0],size_message,SocketFD);
+            mutx.lock();
+            queue_messages.push(msg);
+            mutx.unlock();
         }
         bzero(buffer,4);
         n = read(SocketFD,buffer,4);
     }while(true);
+}
+
+void send_messages(){
+    Messsage msg;
+    while (true) {
+        if(!queue_messages.empty()){
+            mutx.lock();
+            msg = queue_messages.front();
+            queue_messages.pop();
+            mutx.unlock();
+            msg.send_message();
+        }
+    }
 }
 
 int main()
@@ -62,7 +82,9 @@ int main()
         close(SocketFD);
         exit(EXIT_FAILURE);
     }
-    string input;
+    // the thread to send messages of queue
+    std::thread(send_messages).detach();
+
     for(;;)
     {
         int ConnectFD = accept(SocketFD, NULL, NULL);
@@ -73,21 +95,12 @@ int main()
             close(SocketFD);
             exit(EXIT_FAILURE);
         }
-        bool finished = false;
-        std::thread(read_from_client, std::ref(ConnectFD), std::ref(finished)).detach();
-        input = "Bienvenido";
-        string to_send = encode_message(input);
-        n = write(ConnectFD,to_send.c_str(),strlen(to_send.c_str()));
-        while(true){
-            std::getline(std::cin, input);
-            to_send = encode_message(input);
-            n = write(ConnectFD,to_send.c_str(),strlen(to_send.c_str()));
-        }
-
-        shutdown(ConnectFD, SHUT_RDWR);
-        close(ConnectFD);
-        cout << "Disconnected..." << endl;
+        // one thread por client to check
+        std::thread(read_from_client, ConnectFD).detach();
 
     }
+//    shutdown(ConnectFD, SHUT_RDWR);
+//    close(ConnectFD);
+    cout << "Disconnected..." << endl;
     return 0;
 }

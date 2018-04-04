@@ -14,22 +14,23 @@
 using namespace std;
 
 
-void read_from_client(int &SocketFD, bool &finished){
-    finished = false;
+void read_from_client(int SocketFD){
+    //Modify this it's necessary only read 4 bytes
+    //we use 256 to allocate all type of messages
+    //this function shows all the coded message
     char *message_buffer;
-    char buffer[4];
-    bzero(buffer,4);
-    int n = read(SocketFD,buffer,4);
+    char buffer[256];
+    bzero(buffer,256);
+    int n = read(SocketFD,buffer,256);
     do{
         if (n>0){
-            int size_message = atoi(buffer);
-            message_buffer = new char[size_message];
-            n = read(SocketFD, message_buffer, size_message);
-            cout << "Size Message: " << size_message << endl;
-            cout << "Server Message Received:  " << message_buffer << endl;
+//            int size_message = atoi(buffer);
+//            n = read(SocketFD, message_buffer, size_message);
+//            cout << "Size Message: " << size_message << endl;
+            cout << "Server Message Received:  " << buffer << endl;
         }
-        bzero(buffer,4);
-        n = read(SocketFD,buffer,4);
+        bzero(buffer,256);
+        n = read(SocketFD,buffer,256);
     }while(true);
 }
 
@@ -71,21 +72,43 @@ int main(int argc, char *argv[])
         close(SocketFD);
         exit(EXIT_FAILURE);
     }
-    bool finished;
-    std::thread(read_from_client, std::ref(SocketFD), std::ref(finished)).detach();
+    std::thread(read_from_client, SocketFD).detach();
     cout << "Connecting..." << endl;
-    string input_message = "Hi, I'm a Client";
-
-    string to_send = encode_message(input_message);
-
-    n = write(SocketFD,to_send.c_str(),strlen(to_send.c_str()));
-    while (true) {
+    string input_message;
+    string to_send;
+    //Please never use cin alone, use cin with get line
+    while(true){
         std::getline(std::cin, input_message);
-        to_send = encode_message(input_message);
-        n = write(SocketFD,to_send.c_str(),strlen(to_send.c_str()));
-        //printf("Sending:<%s>\n",input_message.c_str());
+        //We have 3 cases to send
+        //Sending P we will receive the users list
+        if(input_message == "P"){
+            to_send = "";
+            to_send = encode_simple_message(string("P"));
+        }
+        //Writing L, we can login in the chat server
+        else if(input_message == "L"){
+            to_send = "";
+            cout << "Please enter your nickname: ";
+            std::getline(std::cin, to_send);
+            to_send = encode_simple_message(string("L")+to_send);
+        }
+        //Writing C we can send a message to other user
+        else if(input_message == "C"){
+            string to_user;
+            to_send = "";
+            cout << "Enter the username to send: ";
+            std::getline(std::cin, to_user);
+            cout << "Enter the message: ";
+            std::getline(std::cin, to_send);
+            to_send = encode_to_user_message(to_send, to_user);
+        }
+        else{
+            cout << "Command not recognized :(" << endl;
+            continue;
+        }
+        n = write(SocketFD, to_send.c_str(), to_send.length());
+        input_message = "";
     }
-
 
     shutdown(SocketFD, SHUT_RDWR);
     close(SocketFD);

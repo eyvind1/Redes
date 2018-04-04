@@ -72,12 +72,19 @@ int main(int argc, char *argv[])
         close(SocketFD);
         exit(EXIT_FAILURE);
     }
+    
     std::thread(read_from_client, SocketFD).detach();
     cout << "Connecting..." << endl;
     string input_message;
     string to_send;
     //Please never use cin alone, use cin with get line
     while(true){
+    	cout<<"Ingrese una de las opciones"<<endl;
+    	cout<<"P : Print list of users"<<endl;
+    	cout<<"L : Login chat"<<endl;
+    	cout<<"C : Send message "<<endl;
+    	cout<<"R : Send "<<endl;
+    	cout<<"E : Logout chat"<<endl;
         std::getline(std::cin, input_message);
         //We have 3 cases to send
         //Sending P we will receive the users list
@@ -101,6 +108,13 @@ int main(int argc, char *argv[])
             cout << "Enter the message: ";
             std::getline(std::cin, to_send);
             to_send = encode_to_user_message(to_send, to_user);
+        }
+        //Writing E we can logout from the chat
+        else if(input_message == "E"){
+        	//cout<< "you left the chat"<<endl;
+        	//cout << "Please enter your nickname: ";
+            std::getline(std::cin, to_send);
+            to_send = encode_simple_message(string("E")+to_send);
         }
         else{
             cout << "Command not recognized :(" << endl;

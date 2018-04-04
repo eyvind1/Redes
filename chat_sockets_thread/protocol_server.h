@@ -61,6 +61,13 @@ public:
             if(operation == 'P')
                 return Messsage(source_socket, prepare_simple_response(get_clients()));
         }
+        if(operation == 'E'){
+            message_buffer = new char[size_message];
+            n = read(source_socket, message_buffer, size_message);
+            //Validate that n and data in future
+            this->remove_client(string(message_buffer), source_socket);
+            return Messsage(source_socket, prepare_simple_response("You left the chat"));
+        }
         if(operation == 'L'){
             message_buffer = new char[size_message];
             n = read(source_socket, message_buffer, size_message);
@@ -111,6 +118,10 @@ public:
 
     void add_client(string name, int socket){
         this->clients[name] = socket;
+    }
+
+    void remove_client(string name, int socket){
+        this->clients.erase(name);
     }
 };
 

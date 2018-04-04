@@ -19,18 +19,30 @@ void read_from_client(int SocketFD){
     //we use 256 to allocate all type of messages
     //this function shows all the coded message
     char *message_buffer;
-    char buffer[256];
-    bzero(buffer,256);
-    int n = read(SocketFD,buffer,256);
+    char *action_buffer;
+    char buffer[4];
+    char action[1];
+    //char buff_action[5];
+    bzero(buffer,4);
+
+    int n = read(SocketFD,buffer,4);
+    
     do{
         if (n>0){
-//            int size_message = atoi(buffer);
-//            n = read(SocketFD, message_buffer, size_message);
-//            cout << "Size Message: " << size_message << endl;
-            cout << "Server Message Received:  " << buffer << endl;
+            int size_message = atoi(buffer);
+            message_buffer = new char[size_message];
+            char buffer_op[1];
+            //now read operation
+            n = read(SocketFD, buffer_op, 1);
+            n = read(SocketFD, message_buffer, size_message);
+            //n = read(SocketFD, buffer_op, 1);
+            cout << "Size Message: " << size_message << endl;
+            cout << "Server Message Received:  " << message_buffer << endl;
+            
+
         }
-        bzero(buffer,256);
-        n = read(SocketFD,buffer,256);
+        bzero(buffer,4);
+        n = read(SocketFD,buffer,4);
     }while(true);
 }
 
@@ -112,7 +124,7 @@ int main(int argc, char *argv[])
         //Writing E we can logout from the chat
         else if(input_message == "E"){
         	//cout<< "you left the chat"<<endl;
-        	//cout << "Please enter your nickname: ";
+        	cout << "Please enter your nickname to logout: ";
             std::getline(std::cin, to_send);
             to_send = encode_simple_message(string("E")+to_send);
         }

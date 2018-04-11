@@ -33,14 +33,13 @@ void read_from_client(int SocketFD){
             message_buffer = new char[size_message];
             char buffer_op[1];
             //now read operation
-            if(buffer_op[0]== 'E')
-            	return;
             n = read(SocketFD, buffer_op, 1);
             n = read(SocketFD, message_buffer, size_message);
             //n = read(SocketFD, buffer_op, 1);
             cout << "Size Message: " << size_message << endl;
             cout << "Server Message Received:  " << message_buffer << endl;
-            
+            if(buffer_op[0]== 'E')
+            	return;
 
         }
         bzero(buffer,4);

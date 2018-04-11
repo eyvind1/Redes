@@ -29,12 +29,12 @@ void read_from_client(int SocketFD){
             int size_message = atoi(buffer);
             char buffer_op[1];
             //now read operation
-            if(buffer_op[0]=='E') return;
             n = read(SocketFD, buffer_op, 1);
             Messsage msg = protocol_chat.read_s(buffer_op[0],size_message,SocketFD);
             mutx.lock();
             queue_messages.push(msg);
             mutx.unlock();
+            if(buffer_op[0]=='E') return;
         }
         bzero(buffer,4);
         n = read(SocketFD,buffer,4);

@@ -87,12 +87,21 @@ public:
             n = read(source_socket, message_buffer, dest_name_size);
             string dest_name = string(message_buffer);
             int dest_socket = this->clients[dest_name]; //get te socket by the name
-
-            //now read the message
-            message_buffer = new char[size_message];
-            n = read(source_socket, message_buffer, size_message);
-            string message = this->get_name_client(source_socket) + " says: " + string(message_buffer);
-            return Messsage(dest_socket, prepare_simple_response(message));
+            string name = get_name_client(dest_socket);
+            if((this->clients.find(name)->second) == 0)
+            {
+                return Messsage(source_socket, prepare_simple_response("Message not sent"));
+            }
+            else{
+                message_buffer = new char[size_message];
+            
+                //now read the message
+                n = read(source_socket, message_buffer, size_message);
+                string message = this->get_name_client(source_socket) + " says: " + string(message_buffer);
+                return Messsage(dest_socket, prepare_simple_response(message));
+            }
+            
+             
         }
     }
 
@@ -126,6 +135,18 @@ public:
         string name;
         name= get_name_client(socket);
         this->clients.erase(name);
+    }
+
+    bool find_client(string name)
+    {
+        for (std::map<string,int>::iterator it=this->clients.begin(); it!=this->clients.end(); ++it){
+            if(it->first == name){
+                 cout<<"find"<<endl;//return true;
+             }
+        
+            else
+                cout<<"false"<<endl;//return false;
+        }
     }
 };
 

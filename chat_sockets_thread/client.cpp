@@ -33,6 +33,8 @@ void read_from_client(int SocketFD){
             message_buffer = new char[size_message];
             char buffer_op[1];
             //now read operation
+            if(buffer_op[0]== 'E')
+            	return;
             n = read(SocketFD, buffer_op, 1);
             n = read(SocketFD, message_buffer, size_message);
             //n = read(SocketFD, buffer_op, 1);
@@ -123,10 +125,9 @@ int main(int argc, char *argv[])
         }
         //Writing E we can logout from the chat
         else if(input_message == "E"){
-        	//cout<< "you left the chat"<<endl;
-        	cout << "Please enter your nickname to logout: ";
-            std::getline(std::cin, to_send);
-            to_send = encode_simple_message(string("E")+to_send);
+        	to_send = "";
+
+            to_send = encode_simple_message(string("E"));
         }
         else{
             cout << "Command not recognized :(" << endl;

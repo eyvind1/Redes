@@ -57,17 +57,19 @@ public:
     Messsage read_s(char operation, int size_message, int source_socket){
         int n;
         char *message_buffer;
+
         if(size_message == 0){
             if(operation == 'P')
                 return Messsage(source_socket, prepare_simple_response(get_clients()));
+
+            if(operation == 'E'){
+                
+                string message = this->get_name_client(source_socket)+" left the chat";
+                this->remove_client(source_socket);
+                return Messsage(source_socket, prepare_simple_response(message));
+            }
         }
-        if(operation == 'E'){
-            message_buffer = new char[size_message];
-            n = read(source_socket, message_buffer, size_message);
-            //Validate that n and data in future
-            this->remove_client(string(message_buffer), source_socket);
-            return Messsage(source_socket, prepare_simple_response("You left the chat"));
-        }
+        
         if(operation == 'L'){
             message_buffer = new char[size_message];
             n = read(source_socket, message_buffer, size_message);
@@ -120,7 +122,9 @@ public:
         this->clients[name] = socket;
     }
 
-    void remove_client(string name, int socket){
+    void remove_client(int socket){
+        string name;
+        name= get_name_client(socket);
         this->clients.erase(name);
     }
 };
